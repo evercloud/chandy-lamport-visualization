@@ -13,7 +13,6 @@
         <div class="controls">
           <button id="startBtn" type="button">Start Manual Snapshot</button>
           <button id="resetBtn" type="button">Reset</button>
-          <button id="toggleChannelStatsBtn" type="button">Show Channel Stats</button>
         </div>
       </header>
       <section class="legend">
@@ -29,12 +28,12 @@
       <section class="stage">
         <svg id="network" viewBox="0 0 900 640" aria-label="Network animation"></svg>
       </section>
-      <aside id="channelStatsPanel" class="channel-stats hidden" aria-live="polite">
-        <h2>Top Active Channels</h2>
-        <p class="channel-stats-hint">
-          Most loaded directional channels (`from -> to`).
+      <aside id="snapshotResultPanel" class="snapshot-result" aria-live="polite">
+        <h2>Last Snapshot Result</h2>
+        <p class="snapshot-result-hint">
+          Local states and readable in-transit channel summary captured by the algorithm.
         </p>
-        <ul id="channelStatsList"></ul>
+        <pre id="snapshotResultText">No snapshot captured yet.</pre>
       </aside>
       <p id="statusText" class="status">Idle. Press Start Manual Snapshot.</p>
     </main>

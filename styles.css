@@ -132,7 +132,7 @@ button:hover {
   margin-top: 0.8rem;
 }
 
-.channel-stats {
+.snapshot-result {
   margin-top: 0.85rem;
   border: 1px solid #334155;
   border-radius: 12px;
@@ -140,31 +140,23 @@ button:hover {
   background: #0d1527;
 }
 
-.channel-stats.hidden {
-  display: none;
-}
-
-.channel-stats h2 {
+.snapshot-result h2 {
   margin: 0;
   font-size: 1rem;
 }
 
-.channel-stats-hint {
+.snapshot-result-hint {
   margin: 0.35rem 0 0.55rem;
   color: var(--muted);
   font-size: 0.86rem;
 }
 
-#channelStatsList {
+#snapshotResultText {
   margin: 0;
-  padding-left: 1rem;
-  display: grid;
-  gap: 0.2rem;
-}
-
-#channelStatsList li {
-  font-size: 0.88rem;
+  font-size: 0.82rem;
+  line-height: 1.35;
   color: #dbe6f3;
+  white-space: pre-wrap;
 }
 
 .edge {

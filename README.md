@@ -23,10 +23,11 @@ Open `index.html` directly in your browser.
 - Each node shows two live counters:
   - `Local state at snapshot`: delivered data messages at local record time
   - `In-transit messages`: data messages captured while incoming channels are still open
-- Optional channel stats panel (`Show Channel Stats`) with top active directional channels
+- Snapshot result panel shows:
+  - per-process local state (`delivered`, `sent`, `pendingOut`) at record time
+  - readable in-transit summary (total, non-empty channels, busiest channels)
 
 ## Controls
 
 - `Start Manual Snapshot`: starts one snapshot run immediately
 - `Reset`: clears packets and restores the initial visual state immediately
-- `Show/Hide Channel Stats`: toggles a compact ranking of busiest channels
