@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chandy-Lamport Snapshot Visualizer</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="toolbar">
+        <h1>Chandy-Lamport Snapshot</h1>
+        <div class="controls">
+          <button id="startBtn" type="button">Start Manual Snapshot</button>
+          <button id="resetBtn" type="button">Reset</button>
+        </div>
+      </header>
+      <section class="legend">
+        <span><i class="dot node-normal"></i> Normal process</span>
+        <span><i class="dot node-recording"></i> Recording process</span>
+        <span><i class="dot packet"></i> Regular packet</span>
+        <span><i class="dot marker"></i> Marker</span>
+      </section>
+      <section class="stage">
+        <svg id="network" viewBox="0 0 900 640" aria-label="Network animation"></svg>
+      </section>
+      <p id="statusText" class="status">Idle. Press Start Manual Snapshot.</p>
+    </main>
+    <script src="./app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,136 @@
+:root {
+  color-scheme: light dark;
+  --bg: #0f172a;
+  --surface: #111827;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --edge: #475569;
+  --node-normal: #22c55e;
+  --node-recording: #ef4444;
+  --packet: #facc15;
+  --marker: #ef4444;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background: radial-gradient(circle at top, #1e293b, var(--bg));
+  color: var(--text);
+}
+
+.app {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 1rem 1rem 1.5rem;
+}
+
+.toolbar {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.controls {
+  display: flex;
+  gap: 0.6rem;
+}
+
+button {
+  border: 1px solid #334155;
+  background: #1f2937;
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0.5rem 0.95rem;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #374151;
+}
+
+.legend {
+  margin: 0.9rem 0;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.dot {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  margin-right: 0.35rem;
+  transform: translateY(1px);
+}
+
+.node-normal {
+  background: var(--node-normal);
+}
+
+.node-recording {
+  background: var(--node-recording);
+}
+
+.packet {
+  background: var(--packet);
+}
+
+.marker {
+  background: var(--marker);
+}
+
+.stage {
+  border: 1px solid #334155;
+  border-radius: 14px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #0b1222, var(--surface));
+}
+
+#network {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.status {
+  color: var(--muted);
+  margin-top: 0.8rem;
+}
+
+.edge {
+  stroke: var(--edge);
+  stroke-width: 2;
+  opacity: 0.7;
+}
+
+.node-circle {
+  fill: var(--node-normal);
+  transition: fill 220ms ease;
+}
+
+.node-circle.recording {
+  fill: var(--node-recording);
+}
+
+.node-label {
+  fill: #f8fafc;
+  font-size: 14px;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+  font-weight: 600;
+}
