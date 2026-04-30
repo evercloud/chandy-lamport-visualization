@@ -15,6 +15,9 @@ const BASE_MARKER_PX_PER_MS = 0.27;
 const svg = document.getElementById("network");
 const startBtn = document.getElementById("startBtn");
 const resetBtn = document.getElementById("resetBtn");
+const toggleChannelStatsBtn = document.getElementById("toggleChannelStatsBtn");
+const channelStatsPanel = document.getElementById("channelStatsPanel");
+const channelStatsList = document.getElementById("channelStatsList");
 const statusText = document.getElementById("statusText");
 
 const state = {
@@ -27,6 +30,7 @@ const state = {
   nextAutoSnapshotAt: null,
   lastFrameTime: null,
   animationHandle: null,
+  showChannelStats: false,
 };
 
 function createSvgElement(tag, attrs = {}) {
@@ -59,14 +63,57 @@ function totalInTransitCaptured(node) {
 function updateNodeStats(node) {
   const localSnapshot = node.snapshotLocalDelivered ?? "-";
   const inTransit = totalInTransitCaptured(node);
-  node.statsLocal.textContent = `Total @ snapshot: ${localSnapshot}`;
-  node.statsTransit.textContent = `In-transit during snapshot: ${inTransit}`;
+  node.statsLocal.textContent = `Local state at snapshot: ${localSnapshot}`;
+  node.statsTransit.textContent = `In-transit messages: ${inTransit}`;
 }
 
 function updateAllNodeStats() {
   state.nodes.forEach((node) => {
     updateNodeStats(node);
   });
+}
+
+function formatChannelLabel(channel) {
+  return `${channel.from.id} -> ${channel.to.id}`;
+}
+
+function refreshChannelStatsPanel() {
+  if (!state.showChannelStats) return;
+
+  const rankedChannels = Array.from(state.channels.values())
+    .map((channel) => {
+      const queueSize = channel.queue.length;
+      const inFlightCount = channel.inFlight ? 1 : 0;
+      const delivered = channel.deliveredCount ?? 0;
+      const captured = channel.capturedInTransitCount ?? 0;
+      return {
+        label: formatChannelLabel(channel),
+        score: queueSize * 3 + inFlightCount * 2 + captured,
+        queueSize,
+        inFlightCount,
+        delivered,
+        captured,
+      };
+    })
+    .sort((a, b) => b.score - a.score || b.delivered - a.delivered)
+    .slice(0, 8);
+
+  channelStatsList.innerHTML = "";
+  rankedChannels.forEach((entry) => {
+    const item = document.createElement("li");
+    item.textContent =
+      `${entry.label} | queue:${entry.queueSize} inFlight:${entry.inFlightCount} delivered:${entry.delivered} captured:${entry.captured}`;
+    channelStatsList.appendChild(item);
+  });
+}
+
+function toggleChannelStats() {
+  state.showChannelStats = !state.showChannelStats;
+  channelStatsPanel.classList.toggle("hidden", !state.showChannelStats);
+  toggleChannelStatsBtn.textContent = state.showChannelStats
+    ? "Hide Channel Stats"
+    : "Show Channel Stats";
+  refreshChannelStatsPanel();
 }
 
 function buildNodes() {
@@ -98,8 +145,8 @@ function buildNodes() {
       y: y + NODE_RADIUS + 28,
       class: "node-stat",
     });
-    statsLocal.textContent = "Local snapshot: -";
-    statsTransit.textContent = "In-transit msgs: 0";
+    statsLocal.textContent = "Local state at snapshot: -";
+    statsTransit.textContent = "In-transit messages: 0";
 
     nodeGroup.appendChild(circle);
     nodeGroup.appendChild(label);
@@ -155,6 +202,8 @@ function buildChannels() {
         distance: Math.hypot(to.x - from.x, to.y - from.y),
         queue: [],
         inFlight: null,
+        deliveredCount: 0,
+        capturedInTransitCount: 0,
       });
     });
   });
@@ -252,6 +301,7 @@ function handleDataArrival(channel) {
 
   // Save in-transit messages for still-open incoming channels.
   receiver.channelState[senderId] += 1;
+  channel.capturedInTransitCount += 1;
   updateNodeStats(receiver);
 }
 
@@ -281,6 +331,7 @@ function updateChannels(deltaMs) {
     } else {
       handleDataArrival(channel);
     }
+    channel.deliveredCount += 1;
     channel.inFlight.visual.remove();
     channel.inFlight = null;
     maybeStartChannelTransmission(channel);
@@ -385,6 +436,7 @@ function frame(timestamp) {
   updateChannels(deltaMs);
   maybeCompleteSnapshot();
   updateAllNodeStats();
+  refreshChannelStatsPanel();
   state.animationHandle = window.requestAnimationFrame(frame);
 }
 
@@ -395,6 +447,8 @@ function clearChannelTraffic() {
       channel.inFlight.visual.remove();
     }
     channel.inFlight = null;
+    channel.deliveredCount = 0;
+    channel.capturedInTransitCount = 0;
   });
 }
 
@@ -413,6 +467,7 @@ function resetSimulation() {
     updateNodeStats(node);
   });
   clearChannelTraffic();
+  refreshChannelStatsPanel();
   scheduleNextAutoSnapshot(state.lastFrameTime ?? performance.now());
   setStatus("Idle. Press Start Manual Snapshot.");
 }
@@ -424,6 +479,7 @@ function init() {
   scheduleNextAutoSnapshot(performance.now());
   startBtn.addEventListener("click", () => triggerSnapshot("manual"));
   resetBtn.addEventListener("click", resetSimulation);
+  toggleChannelStatsBtn.addEventListener("click", toggleChannelStats);
   state.animationHandle = window.requestAnimationFrame(frame);
 }
 

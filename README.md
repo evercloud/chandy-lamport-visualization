@@ -17,11 +17,16 @@ Open `index.html` directly in your browser.
 - Red marker packets are sent on all outgoing channels and trigger chain recording
 - Normal application messages keep flowing during snapshot collection
 - Logical channels are directional and FIFO (`Pi -> Pj`)
+- Packet travel time depends on channel distance, with light jitter and queue-based slowdown
 - Snapshot ends only after each process has received a marker on every incoming channel
 - A node returns to normal color independently when it closes all incoming channels
-- Each node shows two live counters: `L@S` (local delivered messages at snapshot record time) and `InT` (in-transit messages captured on open incoming channels)
+- Each node shows two live counters:
+  - `Local state at snapshot`: delivered data messages at local record time
+  - `In-transit messages`: data messages captured while incoming channels are still open
+- Optional channel stats panel (`Show Channel Stats`) with top active directional channels
 
 ## Controls
 
 - `Start Manual Snapshot`: starts one snapshot run immediately
 - `Reset`: clears packets and restores the initial visual state immediately
+- `Show/Hide Channel Stats`: toggles a compact ranking of busiest channels
