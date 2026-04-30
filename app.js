@@ -9,6 +9,8 @@ const NODE_RADIUS = 26;
 
 const PACKET_SPAWN_MS = 210;
 const SNAPSHOT_COOLDOWN_MS = 1100;
+const BASE_DATA_PX_PER_MS = 0.22;
+const BASE_MARKER_PX_PER_MS = 0.27;
 
 const svg = document.getElementById("network");
 const startBtn = document.getElementById("startBtn");
@@ -113,6 +115,7 @@ function buildChannels() {
       state.channels.set(channelKey(from.id, to.id), {
         from,
         to,
+        distance: Math.hypot(to.x - from.x, to.y - from.y),
         queue: [],
         inFlight: null,
       });
@@ -142,13 +145,19 @@ function maybeStartChannelTransmission(channel) {
   if (channel.inFlight || channel.queue.length === 0) return;
   const message = channel.queue.shift();
   const visual = createPacketVisual(channel.from, channel.to, message.kind);
-  const speed =
-    message.kind === "marker" ? 0.0018 : 0.0010 + Math.random() * 0.00035;
+
+  const baseVelocity =
+    message.kind === "marker" ? BASE_MARKER_PX_PER_MS : BASE_DATA_PX_PER_MS;
+  const jitterMultiplier = 0.85 + Math.random() * 0.35;
+  const congestionFactor = 1 + Math.min(channel.queue.length, 8) * 0.08;
+  const effectiveVelocity = (baseVelocity * jitterMultiplier) / congestionFactor;
+  const progressPerMs = effectiveVelocity / channel.distance;
+
   channel.inFlight = {
     kind: message.kind,
     visual,
     progress: 0,
-    speed,
+    progressPerMs,
   };
 }
 
@@ -209,7 +218,7 @@ function updateChannels(deltaMs) {
     maybeStartChannelTransmission(channel);
     if (!channel.inFlight) return;
 
-    channel.inFlight.progress += channel.inFlight.speed * deltaMs;
+    channel.inFlight.progress += channel.inFlight.progressPerMs * deltaMs;
     if (channel.inFlight.progress > 1) {
       channel.inFlight.progress = 1;
     }
