@@ -49,6 +49,26 @@ function getChannel(fromId, toId) {
   return state.channels.get(channelKey(fromId, toId));
 }
 
+function totalInTransitCaptured(node) {
+  return Object.values(node.channelState).reduce(
+    (sum, value) => sum + value,
+    0,
+  );
+}
+
+function updateNodeStats(node) {
+  const localSnapshot = node.snapshotLocalDelivered ?? "-";
+  const inTransit = totalInTransitCaptured(node);
+  node.statsLocal.textContent = `Total @ snapshot: ${localSnapshot}`;
+  node.statsTransit.textContent = `In-transit during snapshot: ${inTransit}`;
+}
+
+function updateAllNodeStats() {
+  state.nodes.forEach((node) => {
+    updateNodeStats(node);
+  });
+}
+
 function buildNodes() {
   const group = createSvgElement("g");
   svg.appendChild(group);
@@ -68,9 +88,23 @@ function buildNodes() {
     });
     const label = createSvgElement("text", { x, y, class: "node-label" });
     label.textContent = id;
+    const statsLocal = createSvgElement("text", {
+      x,
+      y: y + NODE_RADIUS + 16,
+      class: "node-stat",
+    });
+    const statsTransit = createSvgElement("text", {
+      x,
+      y: y + NODE_RADIUS + 28,
+      class: "node-stat",
+    });
+    statsLocal.textContent = "Local snapshot: -";
+    statsTransit.textContent = "In-transit msgs: 0";
 
     nodeGroup.appendChild(circle);
     nodeGroup.appendChild(label);
+    nodeGroup.appendChild(statsLocal);
+    nodeGroup.appendChild(statsTransit);
     group.appendChild(nodeGroup);
 
     state.nodes.push({
@@ -83,6 +117,9 @@ function buildNodes() {
       channelState: {},
       localDelivered: 0,
       completedSnapshot: false,
+      snapshotLocalDelivered: null,
+      statsLocal,
+      statsTransit,
     });
   }
 }
@@ -150,7 +187,8 @@ function maybeStartChannelTransmission(channel) {
     message.kind === "marker" ? BASE_MARKER_PX_PER_MS : BASE_DATA_PX_PER_MS;
   const jitterMultiplier = 0.85 + Math.random() * 0.35;
   const congestionFactor = 1 + Math.min(channel.queue.length, 8) * 0.08;
-  const effectiveVelocity = (baseVelocity * jitterMultiplier) / congestionFactor;
+  const effectiveVelocity =
+    (baseVelocity * jitterMultiplier) / congestionFactor;
   const progressPerMs = effectiveVelocity / channel.distance;
 
   channel.inFlight = {
@@ -168,6 +206,7 @@ function beginLocalSnapshot(node) {
   node.circle.classList.add("recording");
   node.closedIncoming.clear();
   node.channelState = {};
+  node.snapshotLocalDelivered = node.localDelivered;
 
   state.nodes.forEach((other) => {
     if (other.id !== node.id) {
@@ -180,6 +219,7 @@ function beginLocalSnapshot(node) {
       enqueueMessage(node, target, "marker");
     }
   });
+  updateNodeStats(node);
 }
 
 function handleMarkerArrival(channel) {
@@ -198,6 +238,7 @@ function handleMarkerArrival(channel) {
     receiver.completedSnapshot = true;
     receiver.circle.classList.remove("recording");
   }
+  updateNodeStats(receiver);
 }
 
 function handleDataArrival(channel) {
@@ -211,6 +252,7 @@ function handleDataArrival(channel) {
 
   // Save in-transit messages for still-open incoming channels.
   receiver.channelState[senderId] += 1;
+  updateNodeStats(receiver);
 }
 
 function updateChannels(deltaMs) {
@@ -224,9 +266,11 @@ function updateChannels(deltaMs) {
     }
 
     const x =
-      channel.from.x + (channel.to.x - channel.from.x) * channel.inFlight.progress;
+      channel.from.x +
+      (channel.to.x - channel.from.x) * channel.inFlight.progress;
     const y =
-      channel.from.y + (channel.to.y - channel.from.y) * channel.inFlight.progress;
+      channel.from.y +
+      (channel.to.y - channel.from.y) * channel.inFlight.progress;
     channel.inFlight.visual.setAttribute("cx", String(x));
     channel.inFlight.visual.setAttribute("cy", String(y));
 
@@ -250,7 +294,7 @@ function maybeCompleteSnapshot() {
   if (!allRecorded) return;
 
   const allIncomingClosed = state.nodes.every(
-    (node) => node.closedIncoming.size === state.nodes.length - 1
+    (node) => node.closedIncoming.size === state.nodes.length - 1,
   );
   if (!allIncomingClosed) return;
 
@@ -264,7 +308,9 @@ function maybeCompleteSnapshot() {
       node.completedSnapshot = false;
       node.closedIncoming.clear();
       node.channelState = {};
+      node.snapshotLocalDelivered = null;
       node.circle.classList.remove("recording");
+      updateNodeStats(node);
     });
     state.completedSnapshot = false;
     scheduleNextAutoSnapshot(state.lastFrameTime ?? performance.now());
@@ -295,11 +341,13 @@ function triggerSnapshot(mode = "manual") {
     node.completedSnapshot = false;
     node.closedIncoming.clear();
     node.channelState = {};
+    node.snapshotLocalDelivered = null;
     node.circle.classList.remove("recording");
+    updateNodeStats(node);
   });
   const sourceLabel = mode === "auto" ? "Auto" : "Manual";
   setStatus(
-    `${sourceLabel} snapshot: ${initiator.id} started and sent markers on all outgoing channels.`
+    `${sourceLabel} snapshot: ${initiator.id} started and sent markers on all outgoing channels.`,
   );
   beginLocalSnapshot(initiator);
   scheduleNextAutoSnapshot(state.lastFrameTime ?? performance.now());
@@ -308,7 +356,8 @@ function triggerSnapshot(mode = "manual") {
 function scheduleNextAutoSnapshot(nowMs) {
   const minDelay = 2500;
   const maxDelay = 5200;
-  state.nextAutoSnapshotAt = nowMs + minDelay + Math.random() * (maxDelay - minDelay);
+  state.nextAutoSnapshotAt =
+    nowMs + minDelay + Math.random() * (maxDelay - minDelay);
 }
 
 function frame(timestamp) {
@@ -335,6 +384,7 @@ function frame(timestamp) {
 
   updateChannels(deltaMs);
   maybeCompleteSnapshot();
+  updateAllNodeStats();
   state.animationHandle = window.requestAnimationFrame(frame);
 }
 
@@ -358,7 +408,9 @@ function resetSimulation() {
     node.closedIncoming.clear();
     node.channelState = {};
     node.localDelivered = 0;
+    node.snapshotLocalDelivered = null;
     node.circle.classList.remove("recording");
+    updateNodeStats(node);
   });
   clearChannelTraffic();
   scheduleNextAutoSnapshot(state.lastFrameTime ?? performance.now());

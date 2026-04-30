@@ -19,6 +19,7 @@ Open `index.html` directly in your browser.
 - Logical channels are directional and FIFO (`Pi -> Pj`)
 - Snapshot ends only after each process has received a marker on every incoming channel
 - A node returns to normal color independently when it closes all incoming channels
+- Each node shows two live counters: `L@S` (local delivered messages at snapshot record time) and `InT` (in-transit messages captured on open incoming channels)
 
 ## Controls
 
