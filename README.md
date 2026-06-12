@@ -2,8 +2,6 @@
 
 Simple standalone animation of the Chandy-Lamport distributed snapshot algorithm.
 
-![Chandy-Lamport snapshot visualization](docs/screenshot.png)
-
 ## Run
 
 No setup is required.
@@ -28,6 +26,10 @@ Open `index.html` directly in your browser.
 - Snapshot result panel shows:
   - per-process local state (`delivered`, `sent`, `pendingOut`) at record time
   - readable in-transit summary (total, non-empty channels, busiest channels)
+
+  ## Screenshot
+
+  ![Chandy-Lamport snapshot visualization](docs/screenshot.png)
 
 ## Controls
 
